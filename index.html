@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checker Berita Terkini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B5CF6',
+                        secondary: '#6D28D9',
+                        accent: '#4C1D95',
+                        darkbg: '#1F2937',
+                        darkcard: '#374151',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-darkbg text-gray-200 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-center text-primary flex items-center justify-center">
+                <i class="fas fa-newspaper mr-3 text-4xl"></i>
+                Checker Berita Terkini
+            </h1>
+        </header>
+
+        <main>
+            <form id="news-checker-form" class="space-y-6">
+                <div>
+                    <label class="block mb-3 font-semibold text-lg">Pilih metode input:</label>
+                    <div class="grid grid-cols-1 gap-3">
+                        <label class="flex items-center p-3 bg-darkcard rounded-lg cursor-pointer">
+                            <input type="radio" name="input-type" value="narrative" class="form-radio text-primary" checked>
+                            <span class="ml-3"><i class="fas fa-align-left mr-2"></i>Narasi Berita</span>
+                        </label>
+                        <label class="flex items-center p-3 bg-darkcard rounded-lg cursor-pointer">
+                            <input type="radio" name="input-type" value="url" class="form-radio text-primary">
+                            <span class="ml-3"><i class="fas fa-link mr-2"></i>URL Web</span>
+                        </label>
+                        <label class="flex items-center p-3 bg-darkcard rounded-lg cursor-pointer">
+                            <input type="radio" name="input-type" value="image" class="form-radio text-primary">
+                            <span class="ml-3"><i class="fas fa-image mr-2"></i>Gambar</span>
+                        </label>
+                    </div>
+                </div>
+            
+                <div id="narrative-input">
+                    <label for="news-narrative" class="block mb-2 font-semibold text-lg">
+                        <i class="fas fa-pen-fancy mr-2"></i>Narasi Berita:
+                    </label>
+                    <textarea id="news-narrative" name="news-narrative" rows="5" class="w-full p-3 border rounded-lg bg-darkcard text-gray-200 focus:ring-2 focus:ring-primary" placeholder="Masukkan narasi atau penjelasan singkat tentang berita ini..."></textarea>
+                </div>
+            
+                <div id="url-input" class="hidden">
+                    <label for="news-url" class="block mb-2 font-semibold text-lg">
+                        <i class="fas fa-globe mr-2"></i>URL Berita:
+                    </label>
+                    <input type="url" id="news-url" name="news-url" class="w-full p-3 border rounded-lg bg-darkcard text-gray-200 focus:ring-2 focus:ring-primary" placeholder="https://example.com/berita">
+                </div>
+            
+                <div id="image-input" class="hidden">
+                    <label for="news-image" class="block mb-2 font-semibold text-lg">
+                        <i class="fas fa-file-image mr-2"></i>Unggah Gambar Berita:
+                    </label>
+                    <input type="file" id="news-image" name="news-image" accept="image/*" class="w-full p-3 border rounded-lg bg-darkcard text-gray-200 focus:ring-2 focus:ring-primary">
+                </div>
+            
+                <button type="submit" class="w-full bg-primary text-white py-4 rounded-lg text-xl font-bold hover:bg-secondary transition-colors duration-300">
+                    <i class="fas fa-search mr-2"></i>Periksa Berita
+                </button>
+            </form>
+        
+            <div id="loading" class="hidden mt-8 text-center">
+                <i class="fas fa-circle-notch animate-spin text-4xl text-primary"></i>
+                <p class="mt-2 text-lg">Menganalisis berita...</p>
+            </div>
+
+            <div id="result" class="hidden mt-8">
+                <h2 class="text-2xl font-bold mb-4 text-primary flex items-center">
+                    <i class="fas fa-chart-bar mr-2"></i>Hasil Analisis:
+                </h2>
+                <div id="result-content" class="p-4 border rounded-lg bg-darkcard space-y-4"></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById('news-checker-form');
+        const radioButtons = form.querySelectorAll('input[name="input-type"]');
+        const narrativeInput = document.getElementById('narrative-input');
+        const urlInput = document.getElementById('url-input');
+        const imageInput = document.getElementById('image-input');
+        const loadingDiv = document.getElementById('loading');
+        const resultDiv = document.getElementById('result');
+        const resultContent = document.getElementById('result-content');
+
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                narrativeInput.classList.add('hidden');
+                urlInput.classList.add('hidden');
+                imageInput.classList.add('hidden');
+                
+                if (this.value === 'narrative') {
+                    narrativeInput.classList.remove('hidden');
+                } else if (this.value === 'url') {
+                    urlInput.classList.remove('hidden');
+                } else if (this.value === 'image') {
+                    imageInput.classList.remove('hidden');
+                }
+            });
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const selectedInput = document.querySelector('input[name="input-type"]:checked').value;
+            let inputData;
+            
+            if (selectedInput === 'narrative') {
+                inputData = document.getElementById('news-narrative').value;
+            } else if (selectedInput === 'url') {
+                inputData = document.getElementById('news-url').value;
+            } else if (selectedInput === 'image') {
+                const file = document.getElementById('news-image').files[0];
+                if (file) {
+                    inputData = await fileToBase64(file);
+                } else {
+                    alert('Silakan pilih file gambar.');
+                    return;
+                }
+            }
+
+            loadingDiv.classList.remove('hidden');
+            resultDiv.classList.add('hidden');
+
+            const prompt = `
+Kamu adalah AI yang jago banget ngecek kebenaran berita. Gaya bahasa kamu santai dan kekinian. Berikut tugas kamu:
+
+1. Cek kebenaran berita ini dengan bahasa Indonesia gaul.
+2. Tunjukkan sumber asli kalau ada, dan tambahin juga informasi dari sumber lain yang relevan.
+3. Kasih penilaian yang gampang dimengerti: "Bener", "Sebagian Bener", "Gak Bisa Diverifikasi", "Menyesatkan", atau "Salah".
+4. Jelasin kenapa penilaian kamu begitu.
+5. Kasih saran buat pembaca, gimana cara biar gak gampang kena berita hoaks.
+
+Berikut input yang perlu kamu cek: ${inputData}
+
+Mulai analisis kamu. Berikan respons dalam format HTML yang rapi dengan paragraf, daftar, dan judul yang sesuai.
+            `;
+
+            try {
+                const response = await generateContent(prompt);
+                const result = response.candidates[0].content.parts[0].text;
+
+                loadingDiv.classList.add('hidden');
+                resultDiv.classList.remove('hidden');
+                resultContent.innerHTML = result;
+                resultDiv.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Terjadi kesalahan saat memproses permintaan Anda.');
+                loadingDiv.classList.add('hidden');
+            }
+        });
+
+        async function generateContent(prompt) {
+            const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=AIzaSyB0tjU5Gbayp4858yX6Te_bI0yJhfxBtjc', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            return response.json();
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+    </script>
+</body>
+</html>
